@@ -1,24 +1,34 @@
 
 ```mermaid
-graph TD;
-    A[Blockchain Data APIs (Etherscan, CoinGecko)] --> B[AWS Lambda (API Call)];
-    B --> C{Data Storage};
-    C --> D1[AWS S3 (Data Lake)];
-    C --> D2[AWS RDS (PostgreSQL/MySQL)];
-    C --> D3[AWS DynamoDB];
-    
-    D1 --> E[AWS Glue (ETL Pipeline)];
-    E --> D2;
-    E --> D3;
-    
-    D1 --> F1[AWS Athena (Query S3 Data)];
-    D2 --> F2[SQL Queries (RDS Data)];
-    D3 --> F3[DynamoDB Queries];
 
-    F1 --> G1[Open-Source Visualization (Grafana, Metabase)];
-    F2 --> G1;
-    F3 --> G1;
-
-    H[Source Control (GitHub or CodeCommit)] --> I[CI/CD Pipeline (CodePipeline, CodeBuild, CodeDeploy)];
-    I --> B;
-    I --> E;
+erDiagram
+    API ||--o{ Lambda : Calls
+    Lambda ||--o{ EventBridge : "Triggers on Schedule"
+    Lambda ||--o{ S3 : "Stores Data"
+    Lambda ||--o{ RDS : "Stores Structured Data"
+    Lambda ||--o{ DynamoDB : "Stores Unstructured Data"
+    
+    S3 ||--o{ Glue : "ETL Jobs"
+    RDS ||--o{ Glue : "ETL Jobs"
+    DynamoDB ||--o{ Glue : "ETL Jobs"
+    
+    Glue ||--o{ RDS : "Loads Transformed Data"
+    Glue ||--o{ DynamoDB : "Loads Transformed Data"
+    Glue ||--o{ S3 : "Stores Processed Data"
+    
+    S3 ||--o{ Athena : "Queries Data"
+    RDS ||--o{ Athena : "Queries Data"
+    DynamoDB ||--o{ Athena : "Queries Data"
+    
+    Athena ||--o{ Grafana : "Visualization"
+    Athena ||--o{ Metabase : "Visualization"
+    RDS ||--o{ Grafana : "Visualization"
+    RDS ||--o{ Metabase : "Visualization"
+    DynamoDB ||--o{ Grafana : "Visualization"
+    DynamoDB ||--o{ Metabase : "Visualization"
+    
+    GitHub ||--o{ CodePipeline : "Version Control"
+    CodePipeline ||--o{ CodeBuild : "Builds Lambda/Glue"
+    CodePipeline ||--o{ CodeDeploy : "Deploys Changes"
+    CodePipeline ||--o{ Lambda : "Deploys Updates"
+    CodePipeline ||--o{ Glue : "Deploys Updates"
